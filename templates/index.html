@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pro AI Hand Battle Game</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            color: #fff; 
+            margin: 0; 
+            padding: 30px; 
+            min-height: 100vh; 
+        }
+        h1 { margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        p { font-size: 18px; color: #dcdde1; }
+
+        .game-arena { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 40px; 
+            margin: 30px 0; 
+        }
+        .player-card { 
+            background: rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(10px); 
+            padding: 25px; 
+            border-radius: 15px; 
+            width: 180px; 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); 
+            border: 1px solid rgba(255, 255, 255, 0.18); 
+        }
+        .hand-display { 
+            font-size: 75px; 
+            margin: 15px 0; 
+            height: 90px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+
+        /* Hand Shaking Animations */
+        @keyframes shakeUser {
+            0% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(-15deg); }
+            50% { transform: translateY(0) rotate(0deg); }
+            75% { transform: translateY(-20px) rotate(-15deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        @keyframes shakeComp {
+            0% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(15deg); }
+            50% { transform: translateY(0) rotate(0deg); }
+            75% { transform: translateY(-20px) rotate(15deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        .shake-user { animation: shakeUser 0.6s ease; }
+        .shake-comp { animation: shakeComp 0.6s ease; }
+
+        .vs-text { font-size: 28px; font-weight: bold; color: #fbc531; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        .result-title { font-size: 26px; font-weight: bold; margin: 20px 0; color: #4cd137; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+
+        .btn-container { margin-top: 25px; }
+        button { 
+            font-size: 18px; 
+            padding: 12px 24px; 
+            margin: 0 10px; 
+            cursor: pointer; 
+            border-radius: 30px; 
+            border: none; 
+            background: #e84118; 
+            color: white; 
+            font-weight: bold; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+            transition: 0.3s; 
+        }
+        button:hover { background: #c23616; transform: translateY(-3px); }
+
+        .stats-box { 
+            background: rgba(0, 0, 0, 0.3); 
+            display: inline-block; 
+            padding: 20px 35px; 
+            border-radius: 12px; 
+            margin-top: 25px; 
+            text-align: left; 
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .stats-box p { margin: 6px 0; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <h1>🎮 Pro AI Hand Battle Game</h1>
+    <p>apni chal chunein aur dekhein real hands ka mukabla!</p>
+
+    <div class="game-arena">
+        <!-- User Side -->
+        <div class="player-card">
+            <h3>Aap (You)</h3>
+            <div class="hand-display" id="userHand">✊</div>
+            <p id="userName">Chunein...</p>
+        </div>
+        
+        <div class="vs-text">VS</div>
+
+        <!-- AI Side -->
+        <div class="player-card">
+            <h3>AI Bot 🤖</h3>
+            <div class="hand-display" id="compHand">✊</div>
+            <p id="compName">Waiting...</p>
+        </div>
+    </div>
+
+    <div class="result-title" id="gameResult">Mukabla shuru karne ke liye button dabayein!</div>
+
+    <div class="btn-container">
+        <button onclick="makeMove(0)">Stone 🪨</button>
+        <button onclick="makeMove(1)">Paper 📄</button>
+        <button onclick="makeMove(2)">Scissors ✂️</button>
+    </div>
+
+    <div class="stats-box">
+        <p><strong>Total Games:</strong> <span id="totalCount">0</span></p>
+        <p><strong>Wins:</strong> <span id="winCount" style="color: #4cd137;">0</span></p>
+        <p><strong>Losses:</strong> <span id="lossCount" style="color: #e84118;">0</span></p>
+        <p><strong>Ties:</strong> <span id="tiesCount" style="color: #fbc531;">0</span></p>
+        <p><strong>Win Accuracy:</strong> <span id="accuracy" style="font-weight: bold; color: #00d2d3;">0%</span></p>
+    </div>
+
+    <script>
+        // Mapping choices to hand emojis
+        const handEmojis = {
+            "Stone 🪨": "✊",
+            "Paper 📄": "✋",
+            "Scissors ✂️": "✌️"
+        };
+
+        function makeMove(choice) {
+            const userHandEl = document.getElementById('userHand');
+            const compHandEl = document.getElementById('compHand');
+            const resultEl = document.getElementById('gameResult');
+
+            // Pehle hands ko fist (✊) kar ke shake animation chalayein
+            userHandEl.innerText = "✊";
+            compHandEl.innerText = "✊";
+            userHandEl.classList.add('shake-user');
+            compHandEl.classList.add('shake-comp');
+            resultEl.innerText = "Battle chal rahi hai...";
+
+            // 0.6 seconds baad animation khatam ho kar asal result show hoga
+            setTimeout(() => {
+                userHandEl.classList.remove('shake-user');
+                compHandEl.classList.remove('shake-comp');
+
+                fetch('/play/' + choice)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Text update
+                        document.getElementById('userName').innerText = data.user;
+                        document.getElementById('compName').innerText = data.comp;
+                        
+                        // Emoji hands update
+                        userHandEl.innerText = handEmojis[data.user];
+                        compHandEl.innerText = handEmojis[data.comp];
+
+                        // Result text
+                        resultEl.innerText = data.result;
+
+                        // Scoreboard update
+                        document.getElementById('totalCount').innerText = data.total;
+                        document.getElementById('winCount').innerText = data.wins;
+                        document.getElementById('lossCount').innerText = data.losses;
+                        document.getElementById('tiesCount').innerText = data.ties;
+                        document.getElementById('accuracy').innerText = data.win_percentage + "%";
+                    });
+            }, 600);
+        }
+    </script>
+
+</body>
+</html>
